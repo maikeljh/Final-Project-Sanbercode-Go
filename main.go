@@ -101,7 +101,7 @@ func main() {
 	admin.PUT("/orders/:id", controllers.UpdateOrder)
 	admin.DELETE("/orders/:id", controllers.DeleteOrder)
 
-	router.Run(":" + os.Getenv("PGPORT"))
+	router.Run(":" + os.Getenv("PORT"))
 }
 
 func AuthRequired(c *gin.Context) {
