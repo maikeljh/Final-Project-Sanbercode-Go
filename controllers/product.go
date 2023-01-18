@@ -99,3 +99,24 @@ func DeleteProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
+func GetProductByCategoryID(c *gin.Context) {
+	var (
+		result gin.H
+	)
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	err1, products := repository.GetProductByCategoryID(database.DbConnection, id)
+
+	if err1 != nil {
+		result = gin.H{
+			"result": err1,
+		}
+	} else {
+		result = gin.H{
+			"result": products,
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
+}

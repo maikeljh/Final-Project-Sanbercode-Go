@@ -75,3 +75,27 @@ func DeleteProduct(db *sql.DB, product structs.Product) (err error) {
 	}
 	return err
 }
+
+func GetProductByCategoryID(db *sql.DB, id int) (err error, results []structs.Product) {
+	sql := "SELECT * FROM product WHERE category_id = $1"
+
+	rows, err := db.Query(sql, id)
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var product = structs.Product{}
+
+		err = rows.Scan(&product.ID, &product.Name, &product.CategoryID, &product.Price, &product.Description, &product.CreatedAt, &product.UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+
+		results = append(results, product)
+	}
+
+	return
+}

@@ -23,26 +23,34 @@ func GetAllCart(db *sql.DB) (err error, results []structs.Cart) {
 			panic(err)
 		}
 
+		sql = `SELECT * FROM product WHERE id = $1`
+		var product structs.Product
+		err1 := db.QueryRow(sql, cart.ProductID).Scan(&product.ID, &product.Name, &product.CategoryID, &product.Price, &product.Description, &product.CreatedAt, &product.UpdatedAt)
+		if err1 != nil {
+			panic(err1)
+		}
+		cart.Product = product
+
 		results = append(results, cart)
 	}
 
 	return
 }
 
-func InsertCart(db *sql.DB, user structs.User) (err error) {
-	sql := "INSERT INTO cart (name, address, phone_number, username, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+func InsertCart(db *sql.DB, cart structs.Cart) (err error) {
+	sql := "INSERT INTO cart (product_id, count, user_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
 
 	time := time.Now()
-	errs := db.QueryRow(sql, user.Name, user.Address, user.PhoneNumber, user.Username, user.Password, time, time)
+	errs := db.QueryRow(sql, cart.ProductID, cart.Count, cart.UserID, time, time)
 
 	return errs.Err()
 }
 
-func UpdateCart(db *sql.DB, user structs.User) (err error) {
-	sqlQuery := "UPDATE user SET name = $1, address = $2, phone_number = $3, updated_at = $4 WHERE id = $5"
+func UpdateCart(db *sql.DB, cart structs.Cart) (err error) {
+	sqlQuery := "UPDATE user SET product_id = $1, count = $2, user_id = $3, updated_at = $4 WHERE id = $5"
 
 	time := time.Now()
-	res, errs := db.Exec(sqlQuery, user.Name, user.Address, user.PhoneNumber, time, user.ID)
+	res, errs := db.Exec(sqlQuery, cart.ProductID, cart.Count, cart.UserID, time, cart.ID)
 
 	if errs != nil {
 		panic(errs)
@@ -58,10 +66,10 @@ func UpdateCart(db *sql.DB, user structs.User) (err error) {
 	return err
 }
 
-func DeleteCart(db *sql.DB, user structs.User) (err error) {
-	sqlQuery := "DELETE FROM user WHERE id = $1"
+func DeleteCart(db *sql.DB, cart structs.Cart) (err error) {
+	sqlQuery := "DELETE FROM cart WHERE id = $1"
 
-	res, errs := db.Exec(sqlQuery, user.ID)
+	res, errs := db.Exec(sqlQuery, cart.ID)
 	n, _ := res.RowsAffected()
 
 	if errs != nil {
@@ -74,4 +82,35 @@ func DeleteCart(db *sql.DB, user structs.User) (err error) {
 		err = nil
 	}
 	return err
+}
+
+func GetCartByUserId(db *sql.DB, id int64) (err error, results []structs.Cart) {
+	sql := "SELECT * from cart WHERE user_id = $1"
+
+	rows, err := db.Query(sql, id)
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var cart = structs.Cart{}
+
+		err = rows.Scan(&cart.ID, &cart.ProductID, &cart.Count, &cart.UserID, &cart.CreatedAt, &cart.UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+
+		var product structs.Product
+		err1 := db.QueryRow(sql, cart.ProductID).Scan(&product.ID, &product.Name, &product.CategoryID, &product.Price, &product.Description, &product.CreatedAt, &product.UpdatedAt)
+		if err1 != nil {
+			panic(err1)
+		}
+		cart.Product = product
+
+		results = append(results, cart)
+	}
+
+	return
 }

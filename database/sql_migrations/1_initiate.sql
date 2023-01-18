@@ -27,7 +27,7 @@ CREATE TABLE cart (
     updated_at TIMESTAMP
 );
 
-CREATE TABLE order (
+CREATE TABLE user_order (
     id SERIAL PRIMARY KEY,
     cart_id BIGINT,
     user_id BIGINT,
@@ -35,14 +35,14 @@ CREATE TABLE order (
     updated_at TIMESTAMP
 );
 
-CREATE TABLE user (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(256),
-    address VARCHAR(256),
-    phone_number VARCHAR(256),
-    username VARCHAR(256),
-    password VARCHAR(256),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+CREATE TABLE user_shop (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(256),
+  address VARCHAR(256),
+  phone_number VARCHAR(256),
+  username VARCHAR(256),
+  password VARCHAR(256),
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
 );
 -- +migrate StatementEnd

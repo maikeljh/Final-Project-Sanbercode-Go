@@ -5,8 +5,11 @@ import (
 	"final-project-sanbercode-go-batch-41/controllers"
 	"final-project-sanbercode-go-batch-41/database"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 
+	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -16,6 +19,15 @@ var (
 	DB  *sql.DB
 	err error
 )
+
+var secret = []byte("secret")
+
+const userkey = "user"
+
+type UserAttempt struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 func main() {
 	// ENV CONFIGURATION
@@ -43,28 +55,104 @@ func main() {
 
 	// ROUTER GIN
 	router := gin.Default()
+	router.Use(sessions.Sessions("mysession", sessions.NewCookieStore(secret)))
 
 	// AUTH
-	authorized := router.Group("/", gin.BasicAuth(gin.Accounts{
+	authorized := router.Group("/")
+
+	admin := router.Group("/", gin.BasicAuth(gin.Accounts{
 		"admin": "admin",
 	}))
 
+	// ROUTER REGISTER AND LOGIN
+	router.POST("/login", login)
+	router.POST("/logout", logout)
+	router.POST("/users", controllers.InsertUser)
+
 	// ROUTER CATEGORY
-	router.GET("/categories", controllers.GetAllCategory)
-	authorized.POST("/categories", controllers.InsertCategory)
-	authorized.PUT("/categories/:id", controllers.UpdateCategory)
-	authorized.DELETE("/categories/:id", controllers.DeleteCategory)
+	authorized.Use(AuthRequired).GET("/categories", controllers.GetAllCategory)
+	authorized.Use(AuthRequired).GET("/categories/:id/products", controllers.GetProductByCategoryID)
+	admin.POST("/categories", controllers.InsertCategory)
+	admin.PUT("/categories/:id", controllers.UpdateCategory)
+	admin.DELETE("/categories/:id", controllers.DeleteCategory)
 
 	// ROUTER USER
-	router.GET("/users", controllers.GetAllUsers)
-	authorized.POST("/users", controllers.InsertUser)
-	authorized.PUT("/users/:id", controllers.UpdateUser)
-	authorized.DELETE("/users/:id", controllers.DeleteUser)
+	authorized.Use(AuthRequired).GET("/users", controllers.GetAllUsers)
+	authorized.Use(AuthRequired).GET("/users/:id/carts", controllers.GetCartByUserId)
+	authorized.Use(AuthRequired).GET("/users/:id/orders", controllers.GetOrderByUserId)
+	authorized.Use(AuthRequired).PUT("/users/:id", controllers.UpdateUser)
+	authorized.Use(AuthRequired).DELETE("/users/:id", controllers.DeleteUser)
 
 	// ROUTER PRODUCT
-	router.GET("/products", controllers.GetAllProducts)
-	authorized.POST("/products", controllers.InsertProduct)
-	authorized.PUT("/products/:id", controllers.UpdateProduct)
-	authorized.DELETE("/products/:id", controllers.DeleteProduct)
+	authorized.Use(AuthRequired).GET("/products", controllers.GetAllProducts)
+	admin.POST("/products", controllers.InsertProduct)
+	admin.PUT("/products/:id", controllers.UpdateProduct)
+	admin.DELETE("/products/:id", controllers.DeleteProduct)
+
+	// ROUTER CART
+	authorized.Use(AuthRequired).GET("/carts", controllers.GetAllCart)
+	authorized.Use(AuthRequired).POST("/carts", controllers.InsertCart)
+	authorized.Use(AuthRequired).PUT("/carts/:id", controllers.UpdateCart)
+	authorized.Use(AuthRequired).DELETE("/carts/:id", controllers.DeleteCart)
+
+	// ROUTER ORDER
+	authorized.Use(AuthRequired).GET("/orders", controllers.GetAllOrder)
+	authorized.Use(AuthRequired).POST("/orders", controllers.InsertOrder)
+	admin.PUT("/orders/:id", controllers.UpdateOrder)
+	admin.DELETE("/orders/:id", controllers.DeleteOrder)
+
 	router.Run("localhost:8080")
+}
+
+func AuthRequired(c *gin.Context) {
+	session := sessions.Default(c)
+	user := session.Get(userkey)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized, please log in first."})
+		return
+	}
+	c.Next()
+}
+
+func login(c *gin.Context) {
+	session := sessions.Default(c)
+	attempt := UserAttempt{}
+	err = c.BindJSON(&attempt)
+	if err != nil {
+		panic(err)
+	}
+	username := attempt.Username
+	password := attempt.Password
+
+	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
+		return
+	}
+
+	if username != "hello" || password != "itsme" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
+		return
+	}
+
+	session.Set(userkey, username)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
+}
+
+func logout(c *gin.Context) {
+	session := sessions.Default(c)
+	user := session.Get(userkey)
+	if user == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session token"})
+		return
+	}
+	session.Delete(userkey)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
