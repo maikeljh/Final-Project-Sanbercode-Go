@@ -55,5 +55,16 @@ func main() {
 	authorized.PUT("/categories/:id", controllers.UpdateCategory)
 	authorized.DELETE("/categories/:id", controllers.DeleteCategory)
 
+	// ROUTER USER
+	router.GET("/users", controllers.GetAllUsers)
+	authorized.POST("/users", controllers.InsertUser)
+	authorized.PUT("/users/:id", controllers.UpdateUser)
+	authorized.DELETE("/users/:id", controllers.DeleteUser)
+
+	// ROUTER PRODUCT
+	router.GET("/products", controllers.GetAllProducts)
+	authorized.POST("/products", controllers.InsertProduct)
+	authorized.PUT("/products/:id", controllers.UpdateProduct)
+	authorized.DELETE("/products/:id", controllers.DeleteProduct)
 	router.Run("localhost:8080")
 }
