@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"final-project-sanbercode-go-batch-41/controllers"
 	"final-project-sanbercode-go-batch-41/database"
+	"final-project-sanbercode-go-batch-41/repository"
 	"fmt"
 	"net/http"
 	"os"
@@ -77,7 +78,7 @@ func main() {
 	admin.DELETE("/categories/:id", controllers.DeleteCategory)
 
 	// ROUTER USER
-	authorized.Use(AuthRequired).GET("/users", controllers.GetAllUsers)
+	admin.Use(AuthRequired).GET("/users", controllers.GetAllUsers)
 	authorized.Use(AuthRequired).GET("/users/:id/carts", controllers.GetCartByUserId)
 	authorized.Use(AuthRequired).GET("/users/:id/orders", controllers.GetOrderByUserId)
 	authorized.Use(AuthRequired).PUT("/users/:id", controllers.UpdateUser)
@@ -129,7 +130,17 @@ func login(c *gin.Context) {
 		return
 	}
 
-	if username != "hello" || password != "itsme" {
+	_, users := repository.GetAllUsers(database.DbConnection)
+	var valid bool = false
+
+	for _, user := range users {
+		if user.Username == username && user.Password == password {
+			valid = true
+			break
+		}
+	}
+
+	if !valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
 		return
 	}
