@@ -205,6 +205,7 @@ Description : Mengembalikan list of order
 - product_id : int
 - count : int
 - user_id : int
+- cart_id : int
 
 Description : Melakukan penambahan order
 
@@ -217,6 +218,7 @@ Description : Melakukan penambahan order
 - product_id : int
 - count : int
 - user_id : int
+- cart_id : int
 
 Description : Mengupdate order berdasarkan id
 
