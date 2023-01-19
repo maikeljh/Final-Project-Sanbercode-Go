@@ -39,7 +39,7 @@ func InsertProduct(db *sql.DB, product structs.Product) (err error) {
 }
 
 func UpdateProduct(db *sql.DB, product structs.Product) (err error) {
-	sqlQuery := "UPDATE user SET name = $1, category_id = $2, price = $3, description = $4, updated_at = $5 WHERE id = $6"
+	sqlQuery := "UPDATE product SET name = $1, category_id = $2, price = $3, description = $4, updated_at = $5 WHERE id = $6"
 
 	time := time.Now()
 	res, errs := db.Exec(sqlQuery, product.Name, product.CategoryID, product.Price, product.Description, time, product.ID)
@@ -59,7 +59,7 @@ func UpdateProduct(db *sql.DB, product structs.Product) (err error) {
 }
 
 func DeleteProduct(db *sql.DB, product structs.Product) (err error) {
-	sqlQuery := "DELETE FROM rpdocut WHERE id = $1"
+	sqlQuery := "DELETE FROM product WHERE id = $1"
 
 	res, errs := db.Exec(sqlQuery, product.ID)
 	n, _ := res.RowsAffected()
