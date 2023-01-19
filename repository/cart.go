@@ -47,7 +47,7 @@ func InsertCart(db *sql.DB, cart structs.Cart) (err error) {
 }
 
 func UpdateCart(db *sql.DB, cart structs.Cart) (err error) {
-	sqlQuery := "UPDATE user SET product_id = $1, count = $2, user_id = $3, updated_at = $4 WHERE id = $5"
+	sqlQuery := "UPDATE cart SET product_id = $1, count = $2, user_id = $3, updated_at = $4 WHERE id = $5"
 
 	time := time.Now()
 	res, errs := db.Exec(sqlQuery, cart.ProductID, cart.Count, cart.UserID, time, cart.ID)
