@@ -101,7 +101,8 @@ func GetCartByUserId(db *sql.DB, id int64) (err error, results []structs.Cart) {
 		if err != nil {
 			panic(err)
 		}
-
+		
+		sql := "SELECT * from product WHERE id = $1"
 		var product structs.Product
 		err1 := db.QueryRow(sql, cart.ProductID).Scan(&product.ID, &product.Name, &product.CategoryID, &product.Price, &product.Description, &product.CreatedAt, &product.UpdatedAt)
 		if err1 != nil {
